@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
 )
 
 // http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html

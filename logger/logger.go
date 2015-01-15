@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -19,6 +20,7 @@ type option func(*handler)
 type handler struct {
 	name   string
 	format string
+	flags  int
 	out    io.Writer
 }
 
@@ -47,12 +49,21 @@ func AppName(name string) option {
 // {txbytes}			: Bytes sent, excluding HTTP headers.
 // {status}				: Status sent to the client
 // {useragent}			: User Agent
-// {appname}			: The application name for this server
 // {referer}			: The site from where the request came from
 //
 func Format(format string) option {
 	return func(l *handler) {
 		l.format = format
+	}
+}
+
+// Flags allows to set logging flags using Go's standard log flags.
+//
+// Example: log.LstdFlags | log.shortfile
+// Keep in mind that log.shortfile and log.Llongfile are expensive flags
+func Flags(flags int) option {
+	return func(l *handler) {
+		l.flags = flags
 	}
 }
 
@@ -68,15 +79,16 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 	// Default options
 	handler := &handler{
 		name:   "unknown",
-		format: `{appname} {id} remote_ip={remote_ip} {method} "{host}{url}?{query}" rxbytes={rxbytes} status={status} latency_human={latency_human} latency={latency} txbytes={txbytes}`,
+		format: `{id} remote_ip={remote_ip} {method} "{host}{url}?{query}" rxbytes={rxbytes} status={status} latency_human={latency_human} latency={latency} txbytes={txbytes}`,
 		out:    os.Stdout,
+		flags:  log.LstdFlags,
 	}
 
 	for _, opt := range opts {
 		opt(handler)
 	}
 
-	log.SetOutput(handler.out)
+	l := log.New(handler.out, fmt.Sprintf("[%s] ", handler.name), handler.flags)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -90,22 +102,18 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 
 		w.Header().Set("RequestID", reqID)
 
-		log.Print(applyLogFormat(handler.format, handler.name, -1, w, r))
+		l.Print(applyLogFormat(handler.format, -1, w, r))
 
 		res := NewResponseWriter(w)
 		h.ServeHTTP(res, r)
 
 		latency := time.Since(start)
-		log.Print(applyLogFormat(handler.format, handler.name, latency, res, r))
+		l.Print(applyLogFormat(handler.format, latency, res, r))
 	})
 }
 
-func applyLogFormat(format, appname string, latency time.Duration, w http.ResponseWriter, r *http.Request) string {
+func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter, r *http.Request) string {
 	reqID := w.Header().Get("RequestID")
-
-	if strings.Index(format, "{appname}") > -1 {
-		format = strings.Replace(format, "{appname}", appname, -1)
-	}
 
 	if strings.Index(format, "{remote_ip}") > -1 {
 		format = strings.Replace(format, "{remote_ip}", strings.Split(r.RemoteAddr, ":")[0], -1)

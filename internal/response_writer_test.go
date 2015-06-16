@@ -1,26 +1,15 @@
-package logger
+package internal
 
 import (
 	"bufio"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/hooklift/assert"
 )
-
-func expect(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
-
-func refute(t *testing.T, a interface{}, b interface{}) {
-	if a == b {
-		t.Errorf("Did not expect %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
 
 type closeNotifyingRecorder struct {
 	*httptest.ResponseRecorder
@@ -65,11 +54,11 @@ func TestResponseWriterWritingString(t *testing.T) {
 
 	rw.Write([]byte("Hello world"))
 
-	expect(t, rec.Code, rw.Status())
-	expect(t, rec.Body.String(), "Hello world")
-	expect(t, rw.Status(), http.StatusOK)
-	expect(t, rw.Size(), 11)
-	expect(t, rw.Written(), true)
+	assert.Equals(t, rw.Status(), rec.Code)
+	assert.Equals(t, rec.Body.String(), "Hello world")
+	assert.Equals(t, rw.Status(), http.StatusOK)
+	assert.Equals(t, rw.Size(), 11)
+	assert.Equals(t, rw.Written(), true)
 }
 
 func TestResponseWriterWritingStrings(t *testing.T) {
@@ -79,10 +68,10 @@ func TestResponseWriterWritingStrings(t *testing.T) {
 	rw.Write([]byte("Hello world"))
 	rw.Write([]byte("foo bar bat baz"))
 
-	expect(t, rec.Code, rw.Status())
-	expect(t, rec.Body.String(), "Hello worldfoo bar bat baz")
-	expect(t, rw.Status(), http.StatusOK)
-	expect(t, rw.Size(), 26)
+	assert.Equals(t, rec.Code, rw.Status())
+	assert.Equals(t, "Hello worldfoo bar bat baz", rec.Body.String())
+	assert.Equals(t, http.StatusOK, rw.Status())
+	assert.Equals(t, 26, rw.Size())
 }
 
 func TestResponseWriterWritingHeader(t *testing.T) {
@@ -91,10 +80,10 @@ func TestResponseWriterWritingHeader(t *testing.T) {
 
 	rw.WriteHeader(http.StatusNotFound)
 
-	expect(t, rec.Code, rw.Status())
-	expect(t, rec.Body.String(), "")
-	expect(t, rw.Status(), http.StatusNotFound)
-	expect(t, rw.Size(), 0)
+	assert.Equals(t, rw.Status(), rec.Code)
+	assert.Equals(t, "", rec.Body.String())
+	assert.Equals(t, http.StatusNotFound, rw.Status())
+	assert.Equals(t, 0, rw.Size())
 }
 
 func TestResponseWriterBefore(t *testing.T) {
@@ -111,33 +100,33 @@ func TestResponseWriterBefore(t *testing.T) {
 
 	rw.WriteHeader(http.StatusNotFound)
 
-	expect(t, rec.Code, rw.Status())
-	expect(t, rec.Body.String(), "")
-	expect(t, rw.Status(), http.StatusNotFound)
-	expect(t, rw.Size(), 0)
-	expect(t, result, "barfoo")
+	assert.Equals(t, rw.Status(), rec.Code)
+	assert.Equals(t, "", rec.Body.String())
+	assert.Equals(t, http.StatusNotFound, rw.Status())
+	assert.Equals(t, 0, rw.Size())
+	assert.Equals(t, "barfoo", result)
 }
 
 func TestResponseWriterHijack(t *testing.T) {
 	hijackable := newHijackableResponse()
 	rw := NewResponseWriter(hijackable)
 	hijacker, ok := rw.(http.Hijacker)
-	expect(t, ok, true)
+	assert.Equals(t, true, ok)
 	_, _, err := hijacker.Hijack()
 	if err != nil {
 		t.Error(err)
 	}
-	expect(t, hijackable.Hijacked, true)
+	assert.Equals(t, true, hijackable.Hijacked)
 }
 
 func TestResponseWriteHijackNotOK(t *testing.T) {
 	hijackable := new(http.ResponseWriter)
 	rw := NewResponseWriter(*hijackable)
 	hijacker, ok := rw.(http.Hijacker)
-	expect(t, ok, true)
+	assert.Equals(t, true, ok)
 	_, _, err := hijacker.Hijack()
 
-	refute(t, err, nil)
+	assert.Equals(t, "the ResponseWriter doesn't support the Hijacker interface", err.Error())
 }
 
 func TestResponseWriterCloseNotify(t *testing.T) {
@@ -151,7 +140,7 @@ func TestResponseWriterCloseNotify(t *testing.T) {
 		closed = true
 	case <-time.After(time.Second):
 	}
-	expect(t, closed, true)
+	assert.Equals(t, true, closed)
 }
 
 func TestResponseWriterFlusher(t *testing.T) {
@@ -159,5 +148,5 @@ func TestResponseWriterFlusher(t *testing.T) {
 	rw := NewResponseWriter(rec)
 
 	_, ok := rw.(http.Flusher)
-	expect(t, ok, true)
+	assert.Equals(t, true, ok)
 }

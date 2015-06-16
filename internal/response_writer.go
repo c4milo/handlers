@@ -1,5 +1,5 @@
 // Borrowed from https://github.com/codegangsta/negroni
-package logger
+package internal
 
 import (
 	"bufio"

@@ -6,15 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-)
 
-func newRequest(method, url string) *http.Request {
-	req, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		panic(err)
-	}
-	return req
-}
+	"github.com/hooklift/assert"
+)
 
 func TestHandler(t *testing.T) {
 	requestHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -28,6 +22,6 @@ func TestHandler(t *testing.T) {
 	defer ts.Close()
 
 	_, err := http.Get(ts.URL)
-	expect(t, err, nil)
-	refute(t, logging.String(), "")
+	assert.Ok(t, err)
+	assert.Cond(t, logging.String() != "", "Log output should not be empty.")
 }

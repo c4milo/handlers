@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/c4milo/handlers/internal"
 	"github.com/satori/go.uuid"
 )
 
@@ -104,7 +105,7 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 
 		l.Print(applyLogFormat(handler.format, -1, w, r))
 
-		res := NewResponseWriter(w)
+		res := internal.NewResponseWriter(w)
 		h.ServeHTTP(res, r)
 
 		latency := time.Since(start)
@@ -165,7 +166,7 @@ func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter,
 
 	if strings.Index(format, "{txbytes}") > -1 {
 		size := "..."
-		if v, ok := w.(ResponseWriter); ok {
+		if v, ok := w.(internal.ResponseWriter); ok {
 			size = strconv.Itoa(v.Size())
 		}
 		format = strings.Replace(format, "{txbytes}", size, -1)
@@ -173,7 +174,7 @@ func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter,
 
 	if strings.Index(format, "{status}") > -1 {
 		status := "..."
-		if v, ok := w.(ResponseWriter); ok {
+		if v, ok := w.(internal.ResponseWriter); ok {
 			status = strconv.Itoa(v.Status())
 		}
 		format = strings.Replace(format, "{status}", status, -1)

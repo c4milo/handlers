@@ -40,7 +40,7 @@ type handler struct {
 // * compressor.BestCompression
 // * compressor.BestSpeed
 // * compressor.DefaultCompression
-// * compressor. NoCompression
+// * compressor.NoCompression
 func GzipLevel(l int) option {
 	return func(h *handler) {
 		h.compressionLevel = l
@@ -92,6 +92,7 @@ func GzipHandler(h http.Handler, opts ...option) http.Handler {
 			return
 		}
 
+		// Skip compression if body comes compressed already.
 		curEncoding := hdr.Get(contentEncoding)
 		if curEncoding == gzipEncoding ||
 			curEncoding == deflateEncoding {

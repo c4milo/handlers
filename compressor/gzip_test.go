@@ -31,6 +31,7 @@ func TestGzipHandler(t *testing.T) {
 	assert.Equals(t, acceptEncoding, resp.Header.Get(vary))
 
 	assert.Equals(t, "36", resp.Header.Get(contentLength))
+	assert.Equals(t, "application/x-gzip", resp.Header.Get(contentType))
 
 	gr, err := gzip.NewReader(resp.Body)
 	assert.Ok(t, err)

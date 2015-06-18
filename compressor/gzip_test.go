@@ -27,6 +27,11 @@ func TestGzipHandler(t *testing.T) {
 	resp, err := http.DefaultClient.Do(req)
 	assert.Ok(t, err)
 
+	// Tests for vary header
+	assert.Equals(t, acceptEncoding, resp.Header.Get(vary))
+
+	assert.Equals(t, "36", resp.Header.Get(contentLength))
+
 	gr, err := gzip.NewReader(resp.Body)
 	assert.Ok(t, err)
 	defer gr.Close()

@@ -100,12 +100,12 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 
 		// If there is a request ID already, we use it to keep the transaction
 		// traceable. If not, we generate a new request ID.
-		reqID := w.Header().Get("RequestID")
+		reqID := w.Header().Get("Request-ID")
 		if reqID == "" {
 			reqID = uuid.NewV4().String()
 		}
 
-		w.Header().Set("RequestID", reqID)
+		w.Header().Set("Request-ID", reqID)
 
 		l.Print(applyLogFormat(handler.format, -1, w, r))
 
@@ -118,7 +118,7 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 }
 
 func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter, r *http.Request) string {
-	reqID := w.Header().Get("RequestID")
+	reqID := w.Header().Get("Request-ID")
 
 	if strings.Index(format, "{remote_ip}") > -1 {
 		format = strings.Replace(format, "{remote_ip}", strings.Split(r.RemoteAddr, ":")[0], -1)

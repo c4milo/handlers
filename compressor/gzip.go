@@ -92,8 +92,8 @@ func GzipHandler(h http.Handler, opts ...option) http.Handler {
 			return
 		}
 
-		// Skip compression if body comes compressed already.
-		curEncoding := hdr.Get(contentEncoding)
+		// Skip compression if response body is compressed already.
+		curEncoding := w.Header().Get(contentEncoding)
 		if curEncoding == gzipEncoding ||
 			curEncoding == deflateEncoding {
 			h.ServeHTTP(w, r)

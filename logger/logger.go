@@ -84,7 +84,7 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 	// Default options
 	handler := &handler{
 		name:   "unknown",
-		format: `{id} remote_ip={remote_ip} {method} "{host}{url}?{query}" rxbytes={rxbytes} status={status} latency_human={latency_human} latency={latency} txbytes={txbytes}`,
+		format: `{id} remote_ip={remote_ip} {method} "{host}{url}?{query}" status={status} latency_human={latency_human} latency={latency} rxbytes={rxbytes} txbytes={txbytes}`,
 		out:    os.Stdout,
 		flags:  log.LstdFlags,
 	}

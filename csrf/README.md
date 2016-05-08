@@ -37,6 +37,4 @@ your own [Content Security Policy](http://www.html5rocks.com/en/tutorials/securi
 6. http://stackoverflow.com/questions/24680302/csrf-protection-with-cors-origin-header-vs-csrf-token
 7. https://www.owasp.org/index.php/Testing_for_CSRF_(OTG-SESS-005)
 8. https://www.fastly.com/blog/caching-uncacheable-csrf-security
-
-
-
+9. http://stackoverflow.com/questions/2870371/why-is-jquerys-ajax-method-not-sending-my-session-cookie

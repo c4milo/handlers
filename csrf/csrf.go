@@ -2,6 +2,9 @@
 // License, version 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package csrf offers stateless protection against CSRF attacks using
+// the HTTP Origin header and falling back to HMAC tokens stored on secured
+// and HTTP-only cookies.
 package csrf
 
 import (

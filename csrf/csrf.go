@@ -1,3 +1,9 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, version 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+
+
 package csrf
 
 import (
@@ -10,9 +16,8 @@ import (
 	"golang.org/x/net/xsrftoken"
 )
 
-// Session is used to retrieve userID from the session as it is used as part of the hashing
-// of the CSRF token.
-type Session interface {
+// SessionManager is used to retrieve a session ID as it is used for hashing the CSRF token.
+type SessionManager interface {
 	ID() string
 }
 
@@ -21,32 +26,32 @@ type handler struct {
 	name    string
 	domain  string
 	secret  string
-	session Session
+	session SessionManager
 }
 
-// SetName allows configuring the CSRF cookie name.
-func SetName(n string) option {
+// Name allows configuring the CSRF cookie name.
+func Name(n string) option {
 	return func(h *handler) {
 		h.name = n
 	}
 }
 
-// SetSecret configures the secret cryptographic key for signing the token.
-func SetSecret(s string) option {
+// Secret configures the secret cryptographic key for signing the token.
+func Secret(s string) option {
 	return func(h *handler) {
 		h.secret = s
 	}
 }
 
-// SetSession configures the session handler that is going to be used to retrieve the "userID" key value.
-func SetSession(s Session) option {
+// Session configures the session handler that is going to be used to retrieve the "userID" key value.
+func Session(s SessionManager) option {
 	return func(h *handler) {
 		h.session = s
 	}
 }
 
-// SetDomain configures the domain under which the CSRF cookie is going to be set.
-func SetDomain(d string) option {
+// Domain configures the domain under which the CSRF cookie is going to be set.
+func Domain(d string) option {
 	return func(h *handler) {
 		h.domain = d
 	}
@@ -93,7 +98,7 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 
 		sessionID := csrf.session.ID()
 		if sessionID == "" {
-			log.Println("csrf: Skipped setting token as there is no a current session.")
+			log.Println("csrf: Skipped setting token as there is not a current session.")
 			h.ServeHTTP(w, r)
 			return
 		}

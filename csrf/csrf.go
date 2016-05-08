@@ -2,8 +2,6 @@
 // License, version 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
-
 package csrf
 
 import (
@@ -43,7 +41,7 @@ func Secret(s string) option {
 	}
 }
 
-// Session configures the session handler that is going to be used to retrieve the "userID" key value.
+// Session configures the session manager implementation used to retrieve the session ID.
 func Session(s SessionManager) option {
 	return func(h *handler) {
 		h.session = s

@@ -2,8 +2,7 @@
 // License, version 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package compressor implements GZIP compression. This is highly based on
-// https://github.com/phyber/negroni-gzip, with minor changes.
+// Package compressor implements GZIP compression for HTTP responses.
 package compressor
 
 import (
@@ -91,6 +90,8 @@ func GzipHandler(h http.Handler, opts ...option) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hdr := r.Header
+		// If user-agent does not accept content encoded using gzip,
+		// skip compression.
 		if !strings.Contains(hdr.Get(acceptEncoding), gzipEncoding) {
 			h.ServeHTTP(w, r)
 			return

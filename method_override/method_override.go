@@ -2,6 +2,9 @@
 // License, version 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package methodoverride allows overriding the request's HTTP method
+// by passing a hidden form field '_method' with another method as value.
+// This is especially useful when consuming HTTP APIs from browsers.
 package methodoverride
 
 import (

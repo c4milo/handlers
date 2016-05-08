@@ -10,4 +10,4 @@ go:
 install:
   - go get github.com/hooklift/assert
   - go get golang.org/x/net/xsrftoken
-  - go get github.com/satori/go.uuid"
+  - go get github.com/satori/go.uuid

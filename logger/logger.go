@@ -2,6 +2,7 @@
 // License, version 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package logger allows logging HTTP requests using customized formats.
 package logger
 
 import (

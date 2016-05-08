@@ -18,6 +18,12 @@ it, therefore we provide a fallback to stateless HMAC token.
 * This handler depends on a session or user ID, so you must implement the [Session interface](https://github.com/c4milo/handlers/blob/master/csrf/csrf.go#L15-L17) to allow the handler to retrieve the
 session ID from wherever it is being stored.
 
+#### Usage:
+
+```golang
+
+```
+
 ### Further hardening
 To make things a bit more difficult to malicious folks, take a look at defining
 your own [Content Security Policy](http://www.html5rocks.com/en/tutorials/security/content-security-policy/)
@@ -33,8 +39,4 @@ your own [Content Security Policy](http://www.html5rocks.com/en/tutorials/securi
 8. https://www.fastly.com/blog/caching-uncacheable-csrf-security
 
 
-#### Usage:
 
-```golang
-
-```

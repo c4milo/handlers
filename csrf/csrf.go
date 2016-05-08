@@ -76,6 +76,10 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 		panic("csrf: A secret key must be provided")
 	}
 
+	if csrf.session == nil {
+		panic("csrf: A session ID provider is required")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Details about Origin header can be found at https://wiki.mozilla.org/Security/Origin
 		originValue := r.Header.Get("Origin")
@@ -85,10 +89,6 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 				h.ServeHTTP(w, r)
 				return
 			}
-		}
-
-		if csrf.session == nil {
-			panic("csrf: A session ID provider is required")
 		}
 
 		sessionID := csrf.session.ID()

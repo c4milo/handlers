@@ -12,8 +12,8 @@ your backend service and can be verified by this handler.
 
 ### Assumptions
 * HTTP Origin header is the best way to deflect CSRF attacks, though, some old browsers may not support
-it, therefore we provide a fallback to stateless HMAC token.
-* TLS everywhere has been made possible with https://letsencrypt.org.
+it, therefore we provide a fallback to stateless HMAC tokens.
+* TLS everywhere has been made possible by https://letsencrypt.org, so this handler only sends the CSRF cookie over TLS.
 * Synchronizer Token Pattern is another way of protection, however, this handler offers a simpler and equally effective protection.
 * This handler depends on a session or user ID, so you must implement the [Session interface](https://github.com/c4milo/handlers/blob/master/csrf/csrf.go#L15-L17) to allow the handler to retrieve the
 session ID from wherever it is being stored.

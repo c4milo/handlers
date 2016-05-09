@@ -12,9 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/net/xsrftoken"
-
 	"github.com/hooklift/assert"
+	"golang.org/x/net/xsrftoken"
 )
 
 var requestHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

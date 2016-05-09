@@ -18,10 +18,10 @@ import (
 
 // handler is a private struct which contains the handler's configurable options.
 type handler struct {
-	name      string
-	domain    string
-	secret    string
-	sessionID string
+	name   string
+	domain string
+	secret string
+	userID string
 }
 
 // Name allows configuring the CSRF cookie name.
@@ -38,10 +38,10 @@ func Secret(s string) option {
 	}
 }
 
-// SessionID allows to configure a random and unique user session identifier to generate the CSRF token.
-func SessionID(s string) option {
+// UserID allows to configure a random and unique user ID identifier used to generate the CSRF token.
+func UserID(s string) option {
 	return func(h *handler) {
-		h.sessionID = s
+		h.userID = s
 	}
 }
 
@@ -89,7 +89,7 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 		// Re-enables browser's XSS filter if it was disabled
 		w.Header().Set("x-xss-protection", "1; mode=block")
 
-		if csrf.sessionID == "" {
+		if csrf.userID == "" {
 			http.Error(w, errForbidden, http.StatusForbidden)
 			return
 		}
@@ -101,7 +101,7 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 		case http.MethodDelete:
 		case http.MethodPost:
 		default:
-			setToken(w, csrf.name, csrf.secret, csrf.sessionID, csrf.domain)
+			setToken(w, csrf.name, csrf.secret, csrf.userID, csrf.domain)
 			h.ServeHTTP(w, r)
 			return
 		}
@@ -120,18 +120,18 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 			return
 		}
 
-		if !xsrftoken.Valid(cookie.Value, csrf.secret, csrf.sessionID, "Global") {
+		if !xsrftoken.Valid(cookie.Value, csrf.secret, csrf.userID, "Global") {
 			http.Error(w, errForbidden, http.StatusForbidden)
 			return
 		}
 
-		setToken(w, csrf.name, csrf.secret, csrf.sessionID, csrf.domain)
+		setToken(w, csrf.name, csrf.secret, csrf.userID, csrf.domain)
 		h.ServeHTTP(w, r)
 	})
 }
 
-func setToken(w http.ResponseWriter, name, secret, sessionID, domain string) {
-	token := xsrftoken.Generate(secret, sessionID, "Global")
+func setToken(w http.ResponseWriter, name, secret, userID, domain string) {
+	token := xsrftoken.Generate(secret, userID, "Global")
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    token,

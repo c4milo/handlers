@@ -1,5 +1,5 @@
 ## CSRF handler
-Stateless protection against CSRF attacks for Go web applications.
+Offers stateless protection against CSRF attacks for Go web applications.
 
 * Checks [Origin header]() was sent and matches the Host header.
 * Falls back to a URL-safe and secure HMAC token stored in a HTTP-only

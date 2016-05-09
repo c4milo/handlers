@@ -39,19 +39,19 @@ func TestDomainRequired(t *testing.T) {
 		}
 	}()
 
-	handler := Handler(requestHandler, SessionID("my session ID!"), Secret("my secret!"))
+	handler := Handler(requestHandler, UserID("my user ID!"), Secret("my secret!"))
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 }
 
 func TestCSRFProtection(t *testing.T) {
-	handler := Handler(requestHandler, SessionID("my session ID!"), Secret("my secret!"), Domain("localhost"), Name("_csrf"))
+	handler := Handler(requestHandler, UserID("my user ID!"), Secret("my secret!"), Domain("localhost"), Name("_csrf"))
 	okTS := httptest.NewServer(handler)
 	defer okTS.Close()
 
 	cookie := &http.Cookie{
 		Name:     "_csrf",
-		Value:    xsrftoken.Generate("my secret!", "my session ID!", "Global"),
+		Value:    xsrftoken.Generate("my secret!", "my user ID!", "Global"),
 		Path:     "/",
 		Domain:   "localhost",
 		Expires:  time.Now().Add(xsrftoken.Timeout),

@@ -19,7 +19,7 @@ func ExampleHandler() {
 		fmt.Fprintf(w, "Welcome to the home page!")
 	})
 
-	rack := csrf.Handler(mux, csrf.SessionID("session ID"), csrf.Secret("my secret!"), csrf.Domain("localhost"))
+	rack := csrf.Handler(mux, csrf.UserID("user ID"), csrf.Secret("my secret!"), csrf.Domain("localhost"))
 
 	http.ListenAndServe(":8080", rack)
 }

@@ -32,24 +32,6 @@ func TestSecretRequired(t *testing.T) {
 	defer ts.Close()
 }
 
-func TestSessionRequired(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			assert.Equals(t, errSessionRequired, r)
-		}
-	}()
-
-	handler := Handler(requestHandler, Secret("my secret!"))
-	ts := httptest.NewServer(handler)
-	defer ts.Close()
-}
-
-type SessionImpl struct{}
-
-func (s *SessionImpl) ID() string {
-	return "my ID!"
-}
-
 func TestDomainRequired(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -57,20 +39,19 @@ func TestDomainRequired(t *testing.T) {
 		}
 	}()
 
-	handler := Handler(requestHandler, Session(new(SessionImpl)), Secret("my secret!"))
+	handler := Handler(requestHandler, SessionID("my session ID!"), Secret("my secret!"))
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 }
 
 func TestCSRFProtection(t *testing.T) {
-	session := new(SessionImpl)
-	handler := Handler(requestHandler, Session(session), Secret("my secret!"), Domain("localhost"), Name("_csrf"))
+	handler := Handler(requestHandler, SessionID("my session ID!"), Secret("my secret!"), Domain("localhost"), Name("_csrf"))
 	okTS := httptest.NewServer(handler)
 	defer okTS.Close()
 
 	cookie := &http.Cookie{
 		Name:     "_csrf",
-		Value:    xsrftoken.Generate("my secret!", session.ID(), "Global"),
+		Value:    xsrftoken.Generate("my secret!", "my session ID!", "Global"),
 		Path:     "/",
 		Domain:   "localhost",
 		Expires:  time.Now().Add(xsrftoken.Timeout),

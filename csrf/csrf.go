@@ -16,17 +16,12 @@ import (
 	"golang.org/x/net/xsrftoken"
 )
 
-// SessionManager is used to retrieve a session ID as it is used for hashing the CSRF token.
-type SessionManager interface {
-	ID() string
-}
-
 // handler is a private struct which contains the handler's configurable options.
 type handler struct {
-	name    string
-	domain  string
-	secret  string
-	session SessionManager
+	name      string
+	domain    string
+	secret    string
+	sessionID string
 }
 
 // Name allows configuring the CSRF cookie name.
@@ -43,10 +38,10 @@ func Secret(s string) option {
 	}
 }
 
-// Session configures the session manager implementation used to retrieve the session ID.
-func Session(s SessionManager) option {
+// SessionID allows to configure a random and unique user session identifier to generate the CSRF token.
+func SessionID(s string) option {
 	return func(h *handler) {
-		h.session = s
+		h.sessionID = s
 	}
 }
 
@@ -62,9 +57,8 @@ var (
 	// other than 403 Forbidden messages
 	errForbidden = "Forbidden"
 	// Development time messages
-	errSecretRequired  = errors.New("csrf: a secret key must be provided")
-	errSessionRequired = errors.New("csrf: a session ID provider is required")
-	errDomainRequired  = errors.New("csrf: a domain name is required")
+	errSecretRequired = errors.New("csrf: a secret key must be provided")
+	errDomainRequired = errors.New("csrf: a domain name is required")
 )
 
 // http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
@@ -87,10 +81,6 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 		panic(errSecretRequired)
 	}
 
-	if csrf.session == nil {
-		panic(errSessionRequired)
-	}
-
 	if csrf.domain == "" {
 		panic(errDomainRequired)
 	}
@@ -98,8 +88,8 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Re-enables browser's XSS filter if it was disabled
 		w.Header().Set("x-xss-protection", "1; mode=block")
-		sessionID := csrf.session.ID()
-		if sessionID == "" {
+
+		if csrf.sessionID == "" {
 			http.Error(w, errForbidden, http.StatusForbidden)
 			return
 		}
@@ -111,7 +101,7 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 		case http.MethodDelete:
 		case http.MethodPost:
 		default:
-			setToken(w, csrf.name, csrf.secret, sessionID, csrf.domain)
+			setToken(w, csrf.name, csrf.secret, csrf.sessionID, csrf.domain)
 			h.ServeHTTP(w, r)
 			return
 		}
@@ -130,12 +120,12 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 			return
 		}
 
-		if !xsrftoken.Valid(cookie.Value, csrf.secret, sessionID, "Global") {
+		if !xsrftoken.Valid(cookie.Value, csrf.secret, csrf.sessionID, "Global") {
 			http.Error(w, errForbidden, http.StatusForbidden)
 			return
 		}
 
-		setToken(w, csrf.name, csrf.secret, sessionID, csrf.domain)
+		setToken(w, csrf.name, csrf.secret, csrf.sessionID, csrf.domain)
 		h.ServeHTTP(w, r)
 	})
 }

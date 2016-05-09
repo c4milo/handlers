@@ -96,10 +96,10 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 
 		// We only move forward with CSRF protection for HTTP methods that mutate data.
 		switch r.Method {
-		case http.MethodPut:
-		case http.MethodPatch:
-		case http.MethodDelete:
-		case http.MethodPost:
+		case "PUT":
+		case "PATCH":
+		case "DELETE":
+		case "POST":
 		default:
 			setToken(w, csrf.name, csrf.secret, csrf.userID, csrf.domain)
 			h.ServeHTTP(w, r)

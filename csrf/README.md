@@ -4,7 +4,7 @@ Stateless protection against CSRF attacks for Go web applications.
 * Checks [Origin header]() was sent and matches the Host header.
 * Falls back to a URL-safe and secure HMAC token stored in a HTTP-only
 and secured cookie.
-* Protects all HTTP requests
+* Protects all HTTP requests that would potentially mutate data: POST, PUT, DELETE and PATCH.
 * If you use [CORS](http://www.html5rocks.com/en/tutorials/cors/),
 make sure to enable `Access-Control-Allow-Credentials`, so that the cookie containing the HMAC token is sent to
 your backend service and can be verified by this handler.

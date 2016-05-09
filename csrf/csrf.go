@@ -9,7 +9,6 @@ package csrf
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -59,7 +58,13 @@ func Domain(d string) option {
 }
 
 var (
-	errInvalidCSRFToken = errors.New("Invalid CSRF token.")
+	// We are purposely being ambiguous on the HTTP error messages to avoid giving clues to potential attackers
+	// other than 403 Forbidden messages
+	errForbidden = "Forbidden"
+	// Development time messages
+	errSecretRequired  = errors.New("csrf: a secret key must be provided")
+	errSessionRequired = errors.New("csrf: a session ID provider is required")
+	errDomainRequired  = errors.New("csrf: a domain name is required")
 )
 
 // http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
@@ -79,55 +84,73 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 	}
 
 	if csrf.secret == "" {
-		panic("csrf: A secret key must be provided")
+		panic(errSecretRequired)
 	}
 
 	if csrf.session == nil {
-		panic("csrf: A session ID provider is required")
+		panic(errSessionRequired)
+	}
+
+	if csrf.domain == "" {
+		panic(errDomainRequired)
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Details about Origin header can be found at https://wiki.mozilla.org/Security/Origin
-		originValue := r.Header.Get("Origin")
-		if originValue != "" && originValue != "null" {
-			originURL, err := url.Parse(originValue)
-			if err == nil && originURL.Host == r.Host {
-				h.ServeHTTP(w, r)
-				return
-			}
-		}
-
+		// Re-enables browser's XSS filter if it was disabled
+		w.Header().Set("x-xss-protection", "1; mode=block")
 		sessionID := csrf.session.ID()
 		if sessionID == "" {
-			log.Println("csrf: Skipped setting token as there is not a current session.")
+			http.Error(w, errForbidden, http.StatusForbidden)
+			return
+		}
+
+		// We only move forward with CSRF protection for HTTP methods that mutate data.
+		switch r.Method {
+		case http.MethodPut:
+		case http.MethodPatch:
+		case http.MethodDelete:
+		case http.MethodPost:
+		default:
+			setToken(w, csrf.name, csrf.secret, sessionID, csrf.domain)
+			h.ServeHTTP(w, r)
+			return
+		}
+
+		// Details about Origin header can be found at https://wiki.mozilla.org/Security/Origin
+		originValue := r.Header.Get("origin")
+		originURL, err := url.ParseRequestURI(originValue)
+		if err == nil && originURL.Host == r.Host {
 			h.ServeHTTP(w, r)
 			return
 		}
 
 		cookie, err := r.Cookie(csrf.name)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, errForbidden, http.StatusForbidden)
 			return
 		}
 
 		if !xsrftoken.Valid(cookie.Value, csrf.secret, sessionID, "Global") {
-			http.Error(w, errInvalidCSRFToken.Error(), http.StatusForbidden)
+			http.Error(w, errForbidden, http.StatusForbidden)
 			return
 		}
 
-		token := xsrftoken.Generate(csrf.secret, sessionID, "Global")
-		cookie = &http.Cookie{
-			Name:     csrf.name,
-			Value:    token,
-			Path:     "/",
-			Domain:   csrf.domain,
-			Expires:  time.Now().Add(xsrftoken.Timeout),
-			MaxAge:   int(xsrftoken.Timeout.Seconds()),
-			Secure:   true,
-			HttpOnly: true,
-		}
-		http.SetCookie(w, cookie)
-
+		setToken(w, csrf.name, csrf.secret, sessionID, csrf.domain)
 		h.ServeHTTP(w, r)
 	})
+}
+
+func setToken(w http.ResponseWriter, name, secret, sessionID, domain string) {
+	token := xsrftoken.Generate(secret, sessionID, "Global")
+	cookie := &http.Cookie{
+		Name:     name,
+		Value:    token,
+		Path:     "/",
+		Domain:   domain,
+		Expires:  time.Now().Add(xsrftoken.Timeout),
+		MaxAge:   int(xsrftoken.Timeout.Seconds()),
+		Secure:   true,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, cookie)
 }

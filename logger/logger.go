@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -20,7 +21,7 @@ import (
 )
 
 // http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
-type option func(*handler)
+type Option func(*handler)
 
 // Internal handler
 type handler struct {
@@ -31,7 +32,7 @@ type handler struct {
 }
 
 // AppName allows to set the application name to log.
-func AppName(name string) option {
+func AppName(name string) Option {
 	return func(l *handler) {
 		l.name = name
 	}
@@ -57,7 +58,7 @@ func AppName(name string) option {
 // {useragent}			: User Agent
 // {referer}			: The site from where the request came from
 //
-func Format(format string) option {
+func Format(format string) Option {
 	return func(l *handler) {
 		l.format = format
 	}
@@ -67,27 +68,27 @@ func Format(format string) option {
 //
 // Example: log.LstdFlags | log.shortfile
 // Keep in mind that log.shortfile and log.Llongfile are expensive flags
-func Flags(flags int) option {
+func Flags(flags int) Option {
 	return func(l *handler) {
 		l.flags = flags
 	}
 }
 
 // Output allows setting an output writer for logging to be written to
-func Output(out io.Writer) option {
+func Output(out io.Writer) Option {
 	return func(l *handler) {
 		l.out = out
 	}
 }
 
 // Handler does HTTP request logging
-func Handler(h http.Handler, opts ...option) http.Handler {
+func Handler(h http.Handler, opts ...Option) http.Handler {
 	// Default options
 	handler := &handler{
-		name:   "unknown",
+		name:   "unknown_app",
 		format: `{id} remote_ip={remote_ip} {method} "{host}{url}?{query}" status={status} latency_human={latency_human} latency={latency} rxbytes={rxbytes} txbytes={txbytes}`,
 		out:    os.Stdout,
-		flags:  log.LstdFlags,
+		flags:  log.LstdFlags | log.Lmicroseconds,
 	}
 
 	for _, opt := range opts {
@@ -118,11 +119,19 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 	})
 }
 
+func userIPFromRequest(req *http.Request) string {
+	ip, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		return ""
+	}
+	return ip
+}
+
 func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter, r *http.Request) string {
 	reqID := w.Header().Get("Request-ID")
 
 	if strings.Index(format, "{remote_ip}") > -1 {
-		format = strings.Replace(format, "{remote_ip}", strings.Split(r.RemoteAddr, ":")[0], -1)
+		format = strings.Replace(format, "{remote_ip}", userIPFromRequest(r), -1)
 	}
 
 	if strings.Index(format, "{remote_user}") > -1 {

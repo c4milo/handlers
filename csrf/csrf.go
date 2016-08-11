@@ -24,29 +24,29 @@ type handler struct {
 	userID string
 }
 
-// Name allows configuring the CSRF cookie name.
-func Name(n string) option {
+// WithName allows configuring the CSRF cookie name.
+func WithName(n string) Option {
 	return func(h *handler) {
 		h.name = n
 	}
 }
 
-// Secret configures the secret cryptographic key for signing the token.
-func Secret(s string) option {
+// WithSecret configures the secret cryptographic key for signing the token.
+func WithSecret(s string) Option {
 	return func(h *handler) {
 		h.secret = s
 	}
 }
 
-// UserID allows to configure a random and unique user ID identifier used to generate the CSRF token.
-func UserID(s string) option {
+// WithUserID allows to configure a random and unique user ID identifier used to generate the CSRF token.
+func WithUserID(s string) Option {
 	return func(h *handler) {
 		h.userID = s
 	}
 }
 
-// Domain configures the domain under which the CSRF cookie is going to be set.
-func Domain(d string) option {
+// WithDomain configures the domain under which the CSRF cookie is going to be set.
+func WithDomain(d string) Option {
 	return func(h *handler) {
 		h.domain = d
 	}
@@ -61,13 +61,13 @@ var (
 	errDomainRequired = errors.New("csrf: a domain name is required")
 )
 
-// http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
-type option func(*handler)
+// Option implements http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
+type Option func(*handler)
 
 // Handler checks Origin header first, if not set or has value "null" it validates using
 // a HMAC CSRF token. For enabling Single Page Applications to send the XSRF cookie using
 // async HTTP requests, use CORS and make sure Access-Control-Allow-Credential is enabled.
-func Handler(h http.Handler, opts ...option) http.Handler {
+func Handler(h http.Handler, opts ...Option) http.Handler {
 	// Sets default options
 	csrf := &handler{
 		name: "xt",
@@ -132,7 +132,8 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 
 func setToken(w http.ResponseWriter, name, secret, userID, domain string) {
 	token := xsrftoken.Generate(secret, userID, "Global")
-	cookie := &http.Cookie{
+
+	http.SetCookie(w, &http.Cookie{
 		Name:     name,
 		Value:    token,
 		Path:     "/",
@@ -141,6 +142,5 @@ func setToken(w http.ResponseWriter, name, secret, userID, domain string) {
 		MaxAge:   int(xsrftoken.Timeout.Seconds()),
 		Secure:   true,
 		HttpOnly: true,
-	}
-	http.SetCookie(w, cookie)
+	})
 }

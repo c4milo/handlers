@@ -39,13 +39,20 @@ func TestDomainRequired(t *testing.T) {
 		}
 	}()
 
-	handler := Handler(requestHandler, UserID("my user ID!"), Secret("my secret!"))
+	handler := Handler(requestHandler, WithUserID("my user ID!"), WithSecret("my secret!"))
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 }
 
 func TestCSRFProtection(t *testing.T) {
-	handler := Handler(requestHandler, UserID("my user ID!"), Secret("my secret!"), Domain("localhost"), Name("_csrf"))
+	opts := []Option{
+		WithUserID("my user ID!"),
+		WithSecret("my secret!"),
+		WithDomain("localhost"),
+		WithName("_csrf"),
+	}
+
+	handler := Handler(requestHandler, opts...)
 	okTS := httptest.NewServer(handler)
 	defer okTS.Close()
 

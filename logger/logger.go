@@ -20,7 +20,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
+// Option implements http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
 type Option func(*handler)
 
 // Internal handler
@@ -49,6 +49,7 @@ func AppName(name string) Option {
 // {latency_human}		: The time taken to serve the request, human readable.
 // {id}					: The request ID.
 // {host}				: The Host header sent to the server
+// {scheme}             : The protocol scheme used, either http or https.
 // {method}				: The request method. Ex: GET, POST, DELETE, etc.
 // {url}				: The URL path requested.
 // {query}				: Request's query string
@@ -86,7 +87,7 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 	// Default options
 	handler := &handler{
 		name:   "unknown_app",
-		format: `{id} remote_ip={remote_ip} {method} "{host}{url}?{query}" status={status} latency_human={latency_human} latency={latency} rxbytes={rxbytes} txbytes={txbytes}`,
+		format: `{id} remote_ip={remote_ip} {method} "{scheme}{host}{url}?{query}" status={status} latency_human={latency_human} latency={latency} rxbytes={rxbytes} txbytes={txbytes}`,
 		out:    os.Stdout,
 		flags:  log.LstdFlags | log.Lmicroseconds,
 	}
@@ -119,7 +120,7 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 	})
 }
 
-func userIPFromRequest(req *http.Request) string {
+func userIP(req *http.Request) string {
 	ip, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		return ""
@@ -127,22 +128,46 @@ func userIPFromRequest(req *http.Request) string {
 	return ip
 }
 
+func urlScheme(req *http.Request) string {
+	if req.TLS != nil {
+		return "https://"
+	}
+	return "http://"
+}
+
+func remoteUser(req *http.Request) string {
+	user, _, _ := req.BasicAuth()
+	if user == "" && req.URL.User != nil {
+		user = req.URL.User.Username()
+	}
+
+	return user
+}
+
 func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter, r *http.Request) string {
 	reqID := w.Header().Get("Request-ID")
 
-	if strings.Index(format, "{remote_ip}") > -1 {
-		format = strings.Replace(format, "{remote_ip}", userIPFromRequest(r), -1)
+	values := map[string]string{
+		"{remote_ip}":   userIP(r),
+		"{remote_user}": remoteUser(r),
+		"{id}":          reqID,
+		"{method}":      r.Method,
+		"{url}":         r.URL.Path,
+		"{query}":       r.URL.RawQuery,
+		"{rxbytes}":     strconv.FormatInt(r.ContentLength, 10),
+		"{useragent}":   r.UserAgent(),
+		"{host}":        r.Host,
+		"{referer}":     r.Referer(),
+		"{scheme}":      urlScheme(r),
 	}
 
-	if strings.Index(format, "{remote_user}") > -1 {
-		user, _, _ := r.BasicAuth()
-		if user == "" {
-			user = r.URL.User.Username()
+	for k, v := range values {
+		if strings.Contains(format, k) {
+			format = strings.Replace(format, k, v, -1)
 		}
-		format = strings.Replace(format, "{remote_user}", user, -1)
 	}
 
-	if strings.Index(format, "{latency_human}") > -1 {
+	if strings.Contains(format, "{latency_human}") {
 		l := "..."
 		if latency > -1 {
 			l = latency.String()
@@ -150,7 +175,7 @@ func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter,
 		format = strings.Replace(format, "{latency_human}", l, -1)
 	}
 
-	if strings.Index(format, "{latency}") > -1 {
+	if strings.Contains(format, "{latency}") {
 		l := "..."
 		if latency > -1 {
 			l = strconv.FormatInt(latency.Nanoseconds(), 10)
@@ -158,27 +183,7 @@ func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter,
 		format = strings.Replace(format, "{latency}", l, -1)
 	}
 
-	if strings.Index(format, "{id}") > -1 {
-		format = strings.Replace(format, "{id}", reqID, -1)
-	}
-
-	if strings.Index(format, "{method}") > -1 {
-		format = strings.Replace(format, "{method}", r.Method, -1)
-	}
-
-	if strings.Index(format, "{url}") > -1 {
-		format = strings.Replace(format, "{url}", r.URL.Path, -1)
-	}
-
-	if strings.Index(format, "{query}") > -1 {
-		format = strings.Replace(format, "{query}", r.URL.RawQuery, -1)
-	}
-
-	if strings.Index(format, "{rxbytes}") > -1 {
-		format = strings.Replace(format, "{rxbytes}", strconv.FormatInt(r.ContentLength, 10), -1)
-	}
-
-	if strings.Index(format, "{txbytes}") > -1 {
+	if strings.Contains(format, "{txbytes}") {
 		size := "..."
 		if v, ok := w.(internal.ResponseWriter); ok {
 			size = strconv.Itoa(v.Size())
@@ -186,24 +191,12 @@ func applyLogFormat(format string, latency time.Duration, w http.ResponseWriter,
 		format = strings.Replace(format, "{txbytes}", size, -1)
 	}
 
-	if strings.Index(format, "{status}") > -1 {
+	if strings.Contains(format, "{status}") {
 		status := "..."
 		if v, ok := w.(internal.ResponseWriter); ok {
 			status = strconv.Itoa(v.Status())
 		}
 		format = strings.Replace(format, "{status}", status, -1)
-	}
-
-	if strings.Index(format, "{useragent}") > -1 {
-		format = strings.Replace(format, "{useragent}", r.UserAgent(), -1)
-	}
-
-	if strings.Index(format, "{host}") > -1 {
-		format = strings.Replace(format, "{host}", r.Host, -1)
-	}
-
-	if strings.Index(format, "{referer}") > -1 {
-		format = strings.Replace(format, "{referer}", r.Referer(), -1)
 	}
 
 	return format

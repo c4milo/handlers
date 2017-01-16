@@ -1,3 +1,4 @@
+// Package grpcutil implements gRPC HTTP handler. Useful to serve gRPC requests from an existing HTTP server.
 package grpcutil
 
 import (

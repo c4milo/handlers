@@ -1,3 +1,4 @@
+// Package main shows an example of gRPC handler usage.
 package main
 
 import (

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package grpcutil;
+
+service Test {
+	rpc Hola (HolaRequest) returns (HolaResponse) {
+		option (google.api.http) = {
+			get: "/hola"
+		};
+	}
+}
+
+message HolaRequest{}
+message HolaResponse{
+	string greeting = 1;
+}

@@ -6,7 +6,7 @@ go:
   - 1.7
   - tip
 
-before_install:
+before_script:
   - go generate -v grpcutil/grpc_handler_test.go
 
 install:

@@ -49,18 +49,13 @@ func TestHandler(t *testing.T) {
 		},
 	}
 
-	done := make(chan bool)
 	go func() {
 		if err := srv.ListenAndServeTLS("", ""); err != nil {
-			done <- true
 			if err != http.ErrServerClosed {
 				panic(err)
 			}
-		} else {
-			done <- true
 		}
 	}()
-	fmt.Println("done")
 	defer srv.Close()
 
 	// Prepare gRPC client connection
@@ -73,14 +68,16 @@ func TestHandler(t *testing.T) {
 	clientCreds := credentials.NewClientTLSFromCert(certPool, "")
 	clientOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(clientCreds),
+		grpc.WithBlock(), // block until the server is ready
 	}
 
 	clientConn, err := grpc.Dial("localhost:3333", clientOpts...)
 	assert.Ok(t, err)
-	defer clientConn.Close()
 
 	test := NewTestClient(clientConn)
 	res, err := test.Hola(context.Background(), &HolaRequest{})
+	assert.Ok(t, err)
+	err = clientConn.Close()
 	assert.Ok(t, err)
 	assert.Equals(t, "Hola!", res.Greeting)
 

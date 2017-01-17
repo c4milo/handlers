@@ -88,7 +88,9 @@ func server(cert tls.Certificate) {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for range c {
-			srv.Close()
+			if srv != nil {
+				srv.Close()
+			}
 		}
 	}()
 

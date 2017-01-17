@@ -31,6 +31,7 @@ type options struct {
 	services   []ServiceRegisterFn
 	cert       *tls.Certificate
 	port       string
+	skipPaths  []string
 }
 
 // WithServerOpts sets gRPC server options. Optional.
@@ -58,6 +59,14 @@ func WithTLSCert(cert *tls.Certificate) Option {
 func WithPort(port string) Option {
 	return func(o *options) {
 		o.port = port
+	}
+}
+
+// WithSkipPath allows other handlers to serve static JSON files by instructing the GRPC Gateway Muxer to
+// skip serving the given prefixed paths.
+func WithSkipPath(path ...string) Option {
+	return func(o *options) {
+		o.skipPaths = path
 	}
 }
 
@@ -123,6 +132,13 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 		if r.ProtoMajor == 2 && strings.Contains(contentType, "application/grpc") {
 			server.ServeHTTP(w, r)
 			return
+		}
+
+		for _, p := range options.skipPaths {
+			if strings.HasPrefix(r.URL.Path, p) {
+				h.ServeHTTP(w, r)
+				return
+			}
 		}
 
 		accept := r.Header.Get("Accept")

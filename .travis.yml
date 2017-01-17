@@ -18,6 +18,8 @@ before_install:
   - protoc --version
 
 before_script:
+  - echo $GOPATH
+  - export GOPATH=$HOME/gopath
   - go generate -v grpcutil/grpc_handler_test.go
 
 install:

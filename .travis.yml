@@ -14,18 +14,17 @@ before_install:
   - unzip protoc-$PROTOBUF_VERSION-linux-x86_64.zip
   - mkdir -p $HOME/{bin,include}
   - cp bin/protoc $HOME/bin
+  - cp -R include $HOME
   - export PATH=$PATH:$HOME/bin
   - protoc --version
 
 before_script:
-  - go generate -v grpcutil/grpc_handler_test.go
+  - protoc -I$HOME/include -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --go_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:$GOPATH/src/github.com/c4milo/handlers/grpcutil --grpc-gateway_out=logtostderr=true:$GOPATH/src/github.com/c4milo/handlers/grpcutil --swagger_out=logtostderr=true:$GOPATH/src/github.com/c4milo/handlers/grpcutil $GOPATH/src/github.com/c4milo/handlers/grpcutil/hola.proto
 
 install:
   - go get -v github.com/hooklift/assert
   - go get -v golang.org/x/net/xsrftoken
   - go get -v github.com/satori/go.uuid
   - go get -v google.golang.org/grpc
-  - go get -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
-  - go get -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
   - go get -v github.com/grpc-ecosystem/grpc-gateway/...
   - go get -v github.com/golang/protobuf/protoc-gen-go

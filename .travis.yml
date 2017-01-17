@@ -11,7 +11,7 @@ before_install:
   - sudo apt-get install -y unzip
 
 before_script:
-  - export PATH=$PATH:$PWD/protoc-3.1.0-linux-x86_64
+  - export PATH=$PATH:$PWD/protoc-3.1.0-linux-x86_64/bin
   - go generate -v grpcutil/grpc_handler_test.go
 
 install:

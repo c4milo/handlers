@@ -6,10 +6,17 @@ go:
   - 1.7
   - tip
 
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y unzip
+
 before_script:
+  - export PATH=$PATH:$PWD/protoc-3.1.0-linux-x86_64
   - go generate -v grpcutil/grpc_handler_test.go
 
 install:
+  - wget https://github.com/google/protobuf/releases/download/v3.1.0/protoc-3.1.0-linux-x86_64.zip
+  - unzip protoc-3.1.0-linux-x86_64.zip
   - go get -v github.com/hooklift/assert
   - go get -v golang.org/x/net/xsrftoken
   - go get -v github.com/satori/go.uuid

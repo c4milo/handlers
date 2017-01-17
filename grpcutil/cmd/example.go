@@ -51,25 +51,29 @@ func main() {
 
 type Service struct{}
 
+// Hola prints greeting message
 func (s *Service) Hola(ctx context.Context, r *grpcutil.HolaRequest) (*grpcutil.HolaResponse, error) {
 	return &grpcutil.HolaResponse{Greeting: "Hola from gRPC service!"}, nil
 }
 
+func registerService(binding grpcutil.ServiceBinding) error {
+	grpcutil.RegisterTestServer(binding.GRPCServer, new(Service))
+	return grpcutil.RegisterTestHandler(context.Background(), binding.GRPCGatewayMuxer, binding.GRPCGatewayClient)
+}
+
 func server(cert tls.Certificate) {
-	serverOpts := []grpc.ServerOption{
-		grpc.Creds(credentials.NewServerTLSFromCert(&cert)),
-	}
-
-	grpcServer := grpc.NewServer(serverOpts...)
-	grpcutil.RegisterTestServer(grpcServer, new(Service))
-
 	mux := http.DefaultServeMux
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "Hola from HTTP handler!")
 	})
 
 	handler := logger.Handler(mux)
-	handler = grpcutil.Handler(handler, grpcServer)
+	options := []grpcutil.Option{
+		grpcutil.WithTLSCert(&cert),
+		grpcutil.WithPort("8080"),
+		grpcutil.WithServices([]grpcutil.ServiceRegisterFn{registerService}),
+	}
+	handler = grpcutil.Handler(handler, options...)
 
 	srv := &http.Server{
 		Addr:    "localhost:8080",

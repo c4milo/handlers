@@ -12,14 +12,12 @@ go:
 before_install:
   - wget https://github.com/google/protobuf/releases/download/v$PROTOBUF_VERSION/protoc-$PROTOBUF_VERSION-linux-x86_64.zip 
   - unzip protoc-$PROTOBUF_VERSION-linux-x86_64.zip
-  - mkdir -p $HOME/bin
+  - mkdir -p $HOME/{bin,include}
   - cp bin/protoc $HOME/bin
   - export PATH=$PATH:$HOME/bin
   - protoc --version
 
 before_script:
-  - echo $GOPATH
-  - export GOPATH=$HOME/gopath
   - go generate -v grpcutil/grpc_handler_test.go
 
 install:
@@ -29,4 +27,5 @@ install:
   - go get -v google.golang.org/grpc
   - go get -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
   - go get -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+  - go get -v github.com/grpc-ecosystem/grpc-gateway
   - go get -v github.com/golang/protobuf/protoc-gen-go

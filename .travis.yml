@@ -10,8 +10,11 @@ go:
   - tip
 
 before_install:
-  - ./grpcutil/protobuf.sh
-  - PATH=/home/travis/bin:$PATH protoc --version
+  - wget https://github.com/google/protobuf/releases/download/v3.1.0/protoc-3.1.0-linux-x86_64.zip 
+  - unzip protoc-3.1.0-linux-x86_64.zip
+  - export PATH=$PATH:$PWD/protoc-3.1.0-linux-x86_64/bin/protoc
+  - protoc --version
+
 install:
   - go get -v github.com/hooklift/assert
   - go get -v golang.org/x/net/xsrftoken

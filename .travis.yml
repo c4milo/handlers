@@ -14,6 +14,7 @@ before_install:
   - unzip protoc-$PROTOBUF_VERSION-linux-x86_64.zip
   - bin/protoc --version
   - cp bin/protoc $HOME/gopath/bin
+  - $HOME/gopath/bin/protoc --version
   - export PATH=$PATH:$HOME/gopath/bin
   - protoc --version
 

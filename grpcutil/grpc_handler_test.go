@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/hooklift/assert"
@@ -27,6 +25,11 @@ func (s *Service) Hola(ctx context.Context, r *HolaRequest) (*HolaResponse, erro
 	}, nil
 }
 
+func RegisterService(binding ServiceBinding) error {
+	RegisterTestServer(binding.GRPCServer, new(Service))
+	return RegisterTestHandler(context.Background(), binding.GRPCGatewayMuxer, binding.GRPCGatewayClient)
+}
+
 // TestHandler runs a series of tests against our gRPC server handler.
 func TestHandler(t *testing.T) {
 	requestHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -36,21 +39,29 @@ func TestHandler(t *testing.T) {
 	cert, err := tls.LoadX509KeyPair("testdata/cert.pem", "testdata/key.pem")
 	assert.Ok(t, err)
 
-	serverOpts := []grpc.ServerOption{
-		grpc.Creds(credentials.NewServerTLSFromCert(&cert)),
+	handler := Handler(requestHandler, WithTLSCert(&cert), WithServices([]ServiceRegisterFn{RegisterService}), WithPort("3333"))
+	srv := &http.Server{
+		Addr:    "localhost:3333",
+		Handler: handler,
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			NextProtos:   []string{"h2"},
+		},
 	}
 
-	grpcServer := grpc.NewServer(serverOpts...)
-	RegisterTestServer(grpcServer, new(Service))
-
-	grpcHandler := Handler(requestHandler, grpcServer)
-	server := httptest.NewUnstartedServer(grpcHandler)
-	server.TLS = &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		NextProtos:   []string{"h2"},
-	}
-	server.StartTLS()
-	defer server.Close()
+	done := make(chan bool)
+	go func() {
+		if err := srv.ListenAndServeTLS("", ""); err != nil {
+			done <- true
+			if err != http.ErrServerClosed {
+				panic(err)
+			}
+		} else {
+			done <- true
+		}
+	}()
+	fmt.Println("done")
+	defer srv.Close()
 
 	// Prepare gRPC client connection
 	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
@@ -58,16 +69,13 @@ func TestHandler(t *testing.T) {
 	certPool := x509.NewCertPool()
 	certPool.AddCert(x509Cert)
 
-	u, err := url.Parse(server.URL)
-	assert.Ok(t, err)
-
 	// Tests gRPC service
 	clientCreds := credentials.NewClientTLSFromCert(certPool, "")
 	clientOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(clientCreds),
 	}
 
-	clientConn, err := grpc.Dial("localhost:"+u.Port(), clientOpts...)
+	clientConn, err := grpc.Dial("localhost:3333", clientOpts...)
 	assert.Ok(t, err)
 	defer clientConn.Close()
 
@@ -83,7 +91,7 @@ func TestHandler(t *testing.T) {
 			TLSClientConfig: &tls.Config{RootCAs: certPool},
 		},
 	}
-	res2, err := client.Get("https://localhost:" + u.Port())
+	res2, err := client.Get("https://localhost:3333")
 	assert.Ok(t, err)
 	data, err := ioutil.ReadAll(res2.Body)
 	assert.Ok(t, err)

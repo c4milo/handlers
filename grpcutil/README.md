@@ -1,6 +1,6 @@
 # gRPC server handler
 
-A convenient handler to initialize a gRPC server in an existing HTTP server.
+A convenient handler to initialize a gRPC server and OpenAPI proxy on an existing HTTP server.
 
 ## Requirements
 

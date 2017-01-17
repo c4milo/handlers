@@ -27,5 +27,5 @@ install:
   - go get -v google.golang.org/grpc
   - go get -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
   - go get -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
-  - go get -v github.com/grpc-ecosystem/grpc-gateway
+  - go get -v github.com/grpc-ecosystem/grpc-gateway/...
   - go get -v github.com/golang/protobuf/protoc-gen-go

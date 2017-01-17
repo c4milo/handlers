@@ -13,9 +13,10 @@ before_install:
   - wget https://github.com/google/protobuf/releases/download/v$PROTOBUF_VERSION/protoc-$PROTOBUF_VERSION-linux-x86_64.zip 
   - unzip protoc-$PROTOBUF_VERSION-linux-x86_64.zip
   - bin/protoc --version
-  - cp bin/protoc $HOME/gopath/bin
-  - $HOME/gopath/bin/protoc --version
-  - export PATH=$PATH:$HOME/gopath/bin
+  - mkdir -p $HOME/bin
+  - cp bin/protoc $HOME/bin
+  - $HOME/bin/protoc --version
+  - export PATH=$PATH:$HOME/bin
   - protoc --version
 
 install:

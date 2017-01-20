@@ -69,40 +69,56 @@ func TestCSRFProtection(t *testing.T) {
 
 	expectedBody := "Hello world."
 	tests := []struct {
+		desc       string
 		origin     string
 		body       string
 		statusCode int
 		cookies    int
 		cookie     *http.Cookie
 	}{
-		{okTS.URL, expectedBody, http.StatusOK, 0, nil},
-		{"", expectedBody, http.StatusOK, 1, cookie},
-		{"null", expectedBody, http.StatusOK, 1, cookie},
-		{"", errForbidden + "\n", http.StatusForbidden, 0, nil},
+		{
+			"it should accept mutating request from same origin",
+			okTS.URL, expectedBody, http.StatusOK, 1, nil,
+		},
+		{
+			"it should accept mutating request if no origin and token is found in cookie",
+			"", expectedBody, http.StatusOK, 1, cookie,
+		},
+		{
+			"it should accept mutating request origin is null but a csrf token is found in cookie",
+			"null", expectedBody, http.StatusOK, 1, cookie,
+		},
+		{
+			"it should reject request if not origin and no csrf cookie is found",
+			"", errForbidden + "\n", http.StatusForbidden, 0, nil,
+		},
 	}
 
 	for _, tt := range tests {
-		//fmt.Printf("# %d\n", tn)
-		req, err := http.NewRequest("POST", okTS.URL, nil)
-		assert.Ok(t, err)
+		t.Run(tt.desc, func(t *testing.T) {
+			req, err := http.NewRequest("POST", okTS.URL, nil)
+			assert.Ok(t, err)
 
-		req.Header.Set("origin", tt.origin)
-		if tt.cookie != nil {
-			req.AddCookie(tt.cookie)
-		}
-		resp, err := http.DefaultClient.Do(req)
-		assert.Ok(t, err)
+			req.Header.Set("origin", tt.origin)
+			if tt.cookie != nil {
+				req.AddCookie(tt.cookie)
+			}
+			resp, err := http.DefaultClient.Do(req)
+			assert.Ok(t, err)
+			assert.Equals(t, tt.statusCode, resp.StatusCode)
 
-		body, err := ioutil.ReadAll(resp.Body)
-		assert.Ok(t, err)
-		defer resp.Body.Close()
-		assert.Equals(t, tt.body, string(body[:]))
-		assert.Equals(t, tt.statusCode, resp.StatusCode)
-		assert.Equals(t, tt.cookies, len(resp.Cookies()))
+			body, err := ioutil.ReadAll(resp.Body)
+			assert.Ok(t, err)
+			defer resp.Body.Close()
 
-		for _, c := range resp.Cookies() {
-			assert.Equals(t, "_csrf", c.Name)
-			assert.Cond(t, c != cookie, "csrf cookie has to be different per request")
-		}
+			assert.Equals(t, tt.body, string(body[:]))
+			//fmt.Printf("%+v\n", resp.Cookies())
+			assert.Equals(t, tt.cookies, len(resp.Cookies()))
+
+			for _, c := range resp.Cookies() {
+				assert.Equals(t, "_csrf", c.Name)
+				assert.Cond(t, c != cookie, "csrf cookie has to be different per request")
+			}
+		})
 	}
 }

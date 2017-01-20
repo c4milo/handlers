@@ -94,26 +94,30 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 			return
 		}
 
-		// We only move forward with CSRF protection for HTTP methods that mutate data.
+		// Set the token on the response to GET and HEAD requests
 		switch r.Method {
-		case "PUT":
-		case "PATCH":
-		case "DELETE":
-		case "POST":
-		default:
+		case "GET":
+		case "HEAD":
+		case "OPTIONS":
 			setToken(w, csrf.name, csrf.secret, csrf.userID, csrf.domain)
 			h.ServeHTTP(w, r)
 			return
 		}
 
+		// Verify using origin header first
 		// Details about Origin header can be found at https://wiki.mozilla.org/Security/Origin
 		originValue := r.Header.Get("origin")
-		originURL, err := url.ParseRequestURI(originValue)
-		if err == nil && originURL.Host == r.Host {
-			h.ServeHTTP(w, r)
-			return
+		if originValue != "" {
+			originURL, err := url.ParseRequestURI(originValue)
+			if err == nil && originURL.Host == r.Host {
+				setToken(w, csrf.name, csrf.secret, csrf.userID, csrf.domain)
+				h.ServeHTTP(w, r)
+				return
+			}
+			// log.Printf("csrf: %+v\n", err)
 		}
 
+		// If origin is not supported or came back empty or null, verify cookie instead.
 		cookie, err := r.Cookie(csrf.name)
 		if err != nil {
 			http.Error(w, errForbidden, http.StatusForbidden)

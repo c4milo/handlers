@@ -18,7 +18,7 @@ before_install:
   - protoc --version
 
 before_script:
-  - protoc -I$HOME/include -I$GOPATH/src/github.com/c4milo/handlers/grpcutil -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --go_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:$GOPATH/src/github.com/c4milo/handlers/grpcutil --grpc-gateway_out=logtostderr=true:$GOPATH/src/github.com/c4milo/handlers/grpcutil --swagger_out=logtostderr=true:$GOPATH/src/github.com/c4milo/handlers/grpcutil $GOPATH/src/github.com/c4milo/handlers/grpcutil/hola.proto
+  - protoc -I$HOME/include -I$GOPATH/src/github.com/c4milo/handlers/grpcutil -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --go_out=plugins=grpc:$GOPATH/src/github.com/c4milo/handlers/grpcutil --grpc-gateway_out=logtostderr=true:$GOPATH/src/github.com/c4milo/handlers/grpcutil --swagger_out=logtostderr=true:$GOPATH/src/github.com/c4milo/handlers/grpcutil $GOPATH/src/github.com/c4milo/handlers/grpcutil/hola.proto
 
 install:
   - go get -v github.com/hooklift/assert

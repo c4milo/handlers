@@ -3,44 +3,68 @@ package lz4
 import (
 	"io"
 	"io/ioutil"
+	"sync"
 
 	"github.com/pierrec/lz4"
 	"google.golang.org/grpc"
 )
 
 // Compressor compresses gRPC messages using LZ4
-type compressor struct{}
+type compressor struct {
+	pool sync.Pool
+}
+
+// NewCompressor returns a new LZ4 compressor instance.
+func NewCompressor() grpc.Compressor {
+	return &compressor{
+		pool: sync.Pool{
+			New: func() interface{} {
+				return lz4.NewWriter(ioutil.Discard)
+			},
+		},
+	}
+}
 
 func (c *compressor) Do(w io.Writer, p []byte) error {
-	l := lz4.NewWriter(w)
-	if _, err := l.Write(p); err != nil {
+	lzw := c.pool.Get().(*lz4.Writer)
+	defer c.pool.Put(lzw)
+	lzw.Reset(w)
+
+	if _, err := lzw.Write(p); err != nil {
 		return err
 	}
-	return l.Close()
+	return lzw.Close()
 }
 
 func (c *compressor) Type() string {
 	return "lz4"
 }
 
-// NewCompressor returns a new LZ4 compressor instance.
-func NewCompressor() grpc.Compressor {
-	return &compressor{}
-}
-
 // Decompressor decompresses gRPC messages using LZ4
-type decompressor struct{}
+type decompressor struct {
+	pool sync.Pool
+}
 
 // NewDecompressor returns a new LZ4 decompressor instance.
 func NewDecompressor() grpc.Decompressor {
-	return &decompressor{}
+	return &decompressor{
+		pool: sync.Pool{
+			New: func() interface{} {
+				return lz4.NewReader(nil)
+			},
+		},
+	}
 }
 
-func (c *decompressor) Do(r io.Reader) ([]byte, error) {
-	lr := lz4.NewReader(r)
-	return ioutil.ReadAll(lr)
+func (d *decompressor) Do(r io.Reader) ([]byte, error) {
+	lzr := d.pool.Get().(*lz4.Reader)
+	defer d.pool.Put(lzr)
+
+	lzr.Reset(r)
+
+	return ioutil.ReadAll(lzr)
 }
 
-func (c *decompressor) Type() string {
+func (d *decompressor) Type() string {
 	return "lz4"
 }

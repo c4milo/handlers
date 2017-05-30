@@ -1,4 +1,4 @@
-package lz4
+package grpcutil
 
 import (
 	"io"
@@ -9,14 +9,16 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Compressor compresses gRPC messages using LZ4
+// compressor compresses gRPC messages using LZ4
 type compressor struct {
+	alg  string
 	pool sync.Pool
 }
 
-// NewCompressor returns a new LZ4 compressor instance.
-func NewCompressor() grpc.Compressor {
+// NewLZ4Compressor returns a new LZ4 compressor instance.
+func NewLZ4Compressor() grpc.Compressor {
 	return &compressor{
+		alg: "lz4",
 		pool: sync.Pool{
 			New: func() interface{} {
 				return lz4.NewWriter(ioutil.Discard)
@@ -37,17 +39,19 @@ func (c *compressor) Do(w io.Writer, p []byte) error {
 }
 
 func (c *compressor) Type() string {
-	return "lz4"
+	return c.alg
 }
 
-// Decompressor decompresses gRPC messages using LZ4
+// decompressor decompresses gRPC messages using LZ4
 type decompressor struct {
+	alg  string
 	pool sync.Pool
 }
 
-// NewDecompressor returns a new LZ4 decompressor instance.
-func NewDecompressor() grpc.Decompressor {
+// NewLZ4Decompressor returns a new LZ4 decompressor instance.
+func NewLZ4Decompressor() grpc.Decompressor {
 	return &decompressor{
+		alg: "lz4",
 		pool: sync.Pool{
 			New: func() interface{} {
 				return lz4.NewReader(nil)
@@ -66,5 +70,5 @@ func (d *decompressor) Do(r io.Reader) ([]byte, error) {
 }
 
 func (d *decompressor) Type() string {
-	return "lz4"
+	return d.alg
 }

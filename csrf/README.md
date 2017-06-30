@@ -1,7 +1,7 @@
 ## CSRF handler
 Offers stateless protection against CSRF attacks for Go web applications.
 
-* Checks [Origin header](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Verifying_Same_Origin_with_Standard_Headers) was sent and matches the Host header.
+* Checks [Origin header](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Checking_the_Origin_Header) was sent and matches the Host header.
 * Falls back to a URL-safe and secure HMAC token stored in a HTTP-only
 and secured cookie.
 * Protects all HTTP requests that would potentially mutate data: POST, PUT, DELETE and PATCH.

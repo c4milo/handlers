@@ -5,10 +5,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"log"
+	"net"
 	"net/http"
 	"strings"
-
-	"net"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
@@ -34,6 +33,7 @@ type options struct {
 	cert         *tls.Certificate
 	compressor   grpc.Compressor
 	decompressor grpc.Decompressor
+	errorHandler runtime.ProtoErrorHandlerFunc
 	port         string
 	skipPaths    []string
 }
@@ -87,6 +87,13 @@ func WithDecompressor(d grpc.Decompressor) Option {
 func WithSkipPath(path ...string) Option {
 	return func(o *options) {
 		o.skipPaths = path
+	}
+}
+
+// WithErrorHandler sets a custom gRPC gateway error handler.
+func WithErrorHandler(fn runtime.ProtoErrorHandlerFunc) Option {
+	return func(o *options) {
+		o.errorHandler = fn
 	}
 }
 
@@ -153,7 +160,12 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 		log.Fatalf("failed to connect to local gRPC server: %v", err)
 	}
 
-	gwMuxer := runtime.NewServeMux()
+	var muxOpts []runtime.ServeMuxOption
+	if options.errorHandler != nil {
+		muxOpts = append(muxOpts, runtime.WithProtoErrorHandler(options.errorHandler))
+	}
+
+	gwMuxer := runtime.NewServeMux(muxOpts...)
 	serviceBinding := ServiceBinding{
 		GRPCServer:        server,
 		GRPCGatewayClient: clientConn,

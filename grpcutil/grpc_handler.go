@@ -27,11 +27,13 @@ type ServiceRegisterFn func(ServiceBinding) error
 type Option func(*options)
 
 type options struct {
-	serverOpts []grpc.ServerOption
-	services   []ServiceRegisterFn
-	cert       *tls.Certificate
-	port       string
-	skipPaths  []string
+	serverOpts   []grpc.ServerOption
+	services     []ServiceRegisterFn
+	cert         *tls.Certificate
+	compressor   grpc.Compressor
+	decompressor grpc.Decompressor
+	port         string
+	skipPaths    []string
 }
 
 // WithServerOpts sets gRPC server options. Optional.
@@ -59,6 +61,22 @@ func WithTLSCert(cert *tls.Certificate) Option {
 func WithPort(port string) Option {
 	return func(o *options) {
 		o.port = port
+	}
+}
+
+// WithCompressor sets gRPC server and gateway client compressor.
+// Use this function instead of passing compressor through grcputil.WithServerOpts()
+func WithCompressor(c grpc.Compressor) Option {
+	return func(o *options) {
+		o.compressor = c
+	}
+}
+
+// WithDecompressor sets gRPC server and gateway client decompressor.
+// Use this function instead of passing a decompressor through grcputil.WithServerOpts()
+func WithDecompressor(d grpc.Decompressor) Option {
+	return func(o *options) {
+		o.decompressor = d
 	}
 }
 
@@ -90,9 +108,23 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 		log.Fatal("grpcutil: the list of gRPC services is required")
 	}
 
-	options.serverOpts = append(options.serverOpts, grpc.Creds(credentials.NewServerTLSFromCert(options.cert)))
-	server := grpc.NewServer(options.serverOpts...)
+	if options.cert == nil {
+		log.Fatal("grpcutil: a TLS key pair is required")
+	}
 
+	options.serverOpts = append(options.serverOpts,
+		grpc.Creds(credentials.NewServerTLSFromCert(options.cert)))
+
+	if options.compressor != nil {
+		options.serverOpts = append(options.serverOpts,
+			grpc.RPCCompressor(options.compressor))
+	}
+	if options.decompressor != nil {
+		options.serverOpts = append(options.serverOpts,
+			grpc.RPCDecompressor(options.decompressor))
+	}
+
+	server := grpc.NewServer(options.serverOpts...)
 	certPool := x509.NewCertPool()
 	x509Cert, err := x509.ParseCertificate(options.cert.Certificate[0])
 	if err != nil {
@@ -102,6 +134,7 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 	clientCreds := credentials.NewClientTLSFromCert(certPool, "")
 
 	clientOpts := []grpc.DialOption{
+		grpc.WithDecompressor(options.decompressor),
 		grpc.WithTransportCredentials(clientCreds),
 		grpc.WithUserAgent("grpc-gw"),
 	}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+  "net"
 	"testing"
 
 	"github.com/hooklift/assert"
@@ -41,7 +42,7 @@ func TestHandler(t *testing.T) {
 
 	handler := Handler(requestHandler, WithTLSCert(&cert), WithServices([]ServiceRegisterFn{RegisterService}), WithPort("3333"))
 	srv := &http.Server{
-		Addr:    "localhost:3333",
+		Addr:    net.JoinHostPort("localhost", "3333"),
 		Handler: handler,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},

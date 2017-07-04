@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"net"
+
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -115,16 +117,8 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 	options.serverOpts = append(options.serverOpts,
 		grpc.Creds(credentials.NewServerTLSFromCert(options.cert)))
 
-	if options.compressor != nil {
-		options.serverOpts = append(options.serverOpts,
-			grpc.RPCCompressor(options.compressor))
-	}
-	if options.decompressor != nil {
-		options.serverOpts = append(options.serverOpts,
-			grpc.RPCDecompressor(options.decompressor))
-	}
-
-	server := grpc.NewServer(options.serverOpts...)
+	// In order to support self-signed certificates we make sure to add
+	// the provided certificate to gRPC gateway cert pool.
 	certPool := x509.NewCertPool()
 	x509Cert, err := x509.ParseCertificate(options.cert.Certificate[0])
 	if err != nil {
@@ -134,19 +128,32 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 	clientCreds := credentials.NewClientTLSFromCert(certPool, "")
 
 	clientOpts := []grpc.DialOption{
-		grpc.WithDecompressor(options.decompressor),
 		grpc.WithTransportCredentials(clientCreds),
 		grpc.WithUserAgent("grpc-gw"),
 	}
 
-	address := "localhost:" + options.port
+	if options.compressor != nil {
+		options.serverOpts = append(options.serverOpts,
+			grpc.RPCCompressor(options.compressor))
+
+		if options.decompressor == nil {
+			log.Fatal("grpcutil: gRPC gateway client needs the decompressor")
+		}
+	}
+
+	if options.decompressor != nil {
+		options.serverOpts = append(options.serverOpts, grpc.RPCDecompressor(options.decompressor))
+		clientOpts = append(clientOpts, grpc.WithDecompressor(options.decompressor))
+	}
+
+	server := grpc.NewServer(options.serverOpts...)
+	address := net.JoinHostPort("localhost", options.port)
 	clientConn, err := grpc.Dial(address, clientOpts...)
 	if err != nil {
 		log.Fatalf("failed to connect to local gRPC server: %v", err)
 	}
 
 	gwMuxer := runtime.NewServeMux()
-
 	serviceBinding := ServiceBinding{
 		GRPCServer:        server,
 		GRPCGatewayClient: clientConn,

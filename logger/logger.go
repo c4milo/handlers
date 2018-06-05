@@ -105,7 +105,7 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 		// traceable. If not, we generate a new request ID.
 		reqID := w.Header().Get("Request-ID")
 		if reqID == "" {
-			reqID = uuid.NewV4().String()
+			reqID = uuid.Must(uuid.NewV4()).String()
 		}
 
 		w.Header().Set("Request-ID", reqID)

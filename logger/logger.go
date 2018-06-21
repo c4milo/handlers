@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/c4milo/handlers/internal"
-	"github.com/satori/go.uuid"
 )
 
 // Option implements http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
@@ -100,15 +99,6 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
-		// If there is a request ID already, we use it to keep the transaction
-		// traceable. If not, we generate a new request ID.
-		reqID := w.Header().Get("Request-ID")
-		if reqID == "" {
-			reqID = uuid.Must(uuid.NewV4()).String()
-		}
-
-		w.Header().Set("Request-ID", reqID)
 
 		l.Print(applyLogFormat(handler.format, -1, w, r))
 

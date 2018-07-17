@@ -19,7 +19,7 @@ func TestHandler(t *testing.T) {
 	})
 
 	sessionHandler := Handler(requestHandler, WithSecretKey(
-		"secret", "old1", "old2", "old3",
+		"new", "old1", "old2", "old3",
 	))
 
 	ts := httptest.NewServer(sessionHandler)

@@ -6,7 +6,7 @@ Session management for Go web apps
 
 * Automatically saves session data at the end of each request-response lifecycle.
 
-* Only calls backing store if session data actually changed.
+* Only makes calls to backing store if session data actually changed.
 
 * Secured by default through HTTP and secured only cookies, that are also encrypted and authenticated using XSalsa20 and Poly1305.
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/http/httputil"
 	"testing"
 
 	"github.com/hooklift/assert"
@@ -15,11 +14,13 @@ func TestHandler(t *testing.T) {
 		session, _ := FromContext(r.Context())
 		session.Set("blah", "camilo")
 		value := session.Get("blah")
+		err := session.Save(w)
+		assert.Ok(t, err)
 		fmt.Fprintf(w, "Hello %s!", value)
 	})
 
 	sessionHandler := Handler(requestHandler, WithSecretKey(
-		"new", "old1", "old2", "old3",
+		"new",
 	))
 
 	ts := httptest.NewServer(sessionHandler)
@@ -28,8 +29,15 @@ func TestHandler(t *testing.T) {
 	resp, err := http.Get(ts.URL)
 	assert.Ok(t, err)
 
-	dump, err := httputil.DumpResponse(resp, true)
-	assert.Ok(t, err)
+	cookie := resp.Cookies()[0]
+	s := new(Session)
+	s.Cookie = cookie
+	s.Keys = []string{"new"}
+	s.decode([]byte(cookie.Value))
+	fmt.Printf("decrypted value %#v\n", s.Get("blah"))
 
-	fmt.Printf("%q", dump)
+	// dump, err := httputil.DumpResponse(resp, false)
+	// assert.Ok(t, err)
+
+	//fmt.Printf("%q", dump)
 }

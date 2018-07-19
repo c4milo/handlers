@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/c4milo/handlers/internal"
 	"github.com/pkg/errors"
 	"github.com/vmihailenco/msgpack"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -199,10 +200,14 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Load(r)
-		//	defer s.Save(w)
 
 		ctx := newContext(r.Context(), s)
-		h.ServeHTTP(w, r.WithContext(ctx))
+		res := internal.NewResponseWriter(w)
+		res.Before(func(w internal.ResponseWriter) {
+			s.Save(w)
+		})
+
+		h.ServeHTTP(res, r.WithContext(ctx))
 	})
 }
 

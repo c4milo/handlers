@@ -14,8 +14,6 @@ func TestHandler(t *testing.T) {
 		session, _ := FromContext(r.Context())
 		session.Set("blah", "camilo")
 		value := session.Get("blah")
-		err := session.Save(w)
-		assert.Ok(t, err)
 		fmt.Fprintf(w, "Hello %s!", value)
 	})
 

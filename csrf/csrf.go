@@ -58,7 +58,6 @@ var (
 	errForbidden = "Forbidden"
 	// Development time messages
 	errSecretRequired = errors.New("csrf: a secret key must be provided")
-	errDomainRequired = errors.New("csrf: a domain name is required")
 )
 
 // Option implements http://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
@@ -81,18 +80,9 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 		panic(errSecretRequired)
 	}
 
-	if csrf.domain == "" {
-		panic(errDomainRequired)
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Re-enables browser's XSS filter if it was disabled
 		w.Header().Set("x-xss-protection", "1; mode=block")
-
-		if csrf.userID == "" {
-			http.Error(w, errForbidden, http.StatusForbidden)
-			return
-		}
 
 		// Set the token on the response to GET and HEAD requests
 		switch r.Method {

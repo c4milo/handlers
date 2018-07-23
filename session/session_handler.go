@@ -112,8 +112,8 @@ func (h *handler) Save(w http.ResponseWriter, s *Session) error {
 
 	defer http.SetCookie(w, s.Cookie)
 
-	// If session was destroyed by user, make sure the destroy operation,
-	// from external Store, is also invoked.
+	// If session was destroyed by user, make sure the destroy operation
+	// from external Store is also invoked.
 	if s.MaxAge == -1 && h.store != nil {
 		return h.store.Destroy(s.Value)
 	}

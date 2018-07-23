@@ -32,23 +32,10 @@ func TestSecretRequired(t *testing.T) {
 	defer ts.Close()
 }
 
-func TestDomainRequired(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			assert.Equals(t, errDomainRequired, r)
-		}
-	}()
-
-	handler := Handler(requestHandler, WithUserID("my user ID!"), WithSecret("my secret!"))
-	ts := httptest.NewServer(handler)
-	defer ts.Close()
-}
-
 func TestCSRFProtection(t *testing.T) {
 	opts := []Option{
 		WithUserID("my user ID!"),
 		WithSecret("my secret!"),
-		WithDomain("localhost"),
 		WithName("_csrf"),
 	}
 

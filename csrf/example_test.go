@@ -22,7 +22,6 @@ func ExampleHandler() {
 	opts := []csrf.Option{
 		csrf.WithUserID("user ID"),
 		csrf.WithSecret("my secret!"),
-		csrf.WithDomain("localhost"),
 	}
 
 	rack := csrf.Handler(mux, opts...)

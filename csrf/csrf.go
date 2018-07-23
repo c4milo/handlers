@@ -86,9 +86,7 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 
 		// Set the token on the response to GET and HEAD requests
 		switch r.Method {
-		case http.MethodGet:
-		case http.MethodHead:
-		case http.MethodOptions:
+		case http.MethodGet, http.MethodHead, http.MethodOptions:
 			setToken(w, csrf.name, csrf.secret, csrf.userID, csrf.domain)
 			h.ServeHTTP(w, r)
 			return

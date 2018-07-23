@@ -106,7 +106,7 @@ func (h *handler) Load(r *http.Request) (*Session, error) {
 // Save persist session data either on the built-in cookie store or an external Store.
 // When external store is used, the cookie's value contains the session ID.
 func (h *handler) Save(w http.ResponseWriter, s *Session) error {
-	if !s.isDirty || s.Value == "" {
+	if !s.isDirty {
 		return nil
 	}
 

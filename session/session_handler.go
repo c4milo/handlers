@@ -59,8 +59,7 @@ func WithMaxAge(d time.Duration) option {
 
 // Load loads the session, either form the built-in cookie store or an external Store
 func (h *handler) Load(r *http.Request) (*Session, error) {
-	s := new(Session)
-	s.data = make(map[interface{}]interface{})
+	s := New()
 
 	cookie, err := r.Cookie(h.name)
 	if err != nil {
@@ -96,7 +95,7 @@ func (h *handler) Load(r *http.Request) (*Session, error) {
 		}
 	}
 
-	if err := s.decode(data); err != nil {
+	if err := s.Decode(data); err != nil {
 		return s, err
 	}
 
@@ -118,7 +117,7 @@ func (h *handler) Save(w http.ResponseWriter, s *Session) error {
 		return h.store.Destroy(s.Value)
 	}
 
-	data, err := s.encode()
+	data, err := s.Encode()
 	if err != nil {
 		return err
 	}

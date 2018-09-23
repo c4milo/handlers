@@ -33,7 +33,7 @@ func TestSave(t *testing.T) {
 	s := new(Session)
 	s.Cookie = cookie
 	s.Keys = []string{"new"}
-	s.decode([]byte(cookie.Value))
+	s.Decode([]byte(cookie.Value))
 	assert.Equals(t, "gophersito", s.Get("blah"))
 	assert.Equals(t, nil, s.Get("blah2"))
 }

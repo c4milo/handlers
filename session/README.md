@@ -1,4 +1,4 @@
-# Golang Session Handler
+# Session Handler
 
 Session management for Go web apps
 

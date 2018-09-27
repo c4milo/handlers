@@ -168,3 +168,10 @@ func genID(size int) string {
 
 	return fmt.Sprintf("%x", b)
 }
+
+// Register registers custom struct types that are going to be stored in the sessions.
+// It allows to retrive struct types from the session and do type assertions on them as
+// opposed to map values.
+func Register(id int8, value interface{}) {
+	msgpack.RegisterExt(id, value)
+}

@@ -59,17 +59,14 @@ func WithMaxAge(d time.Duration) option {
 
 // Load loads the session, either form the built-in cookie store or an external Store
 func (h *handler) Load(r *http.Request) (*Session, error) {
-	s := New(h.keys)
+	s := New(h.name, h.keys)
 
 	cookie, err := r.Cookie(h.name)
 	if err != nil {
-		// No session cookie is found, we create and initialize a new one.
-		s.Cookie = &http.Cookie{
-			Name:     h.name,
-			MaxAge:   h.maxAge,
-			Domain:   h.domain,
-			HttpOnly: true,
-		}
+		// No session cookie found, we finish initializing a new one.
+		s.Cookie.MaxAge = h.maxAge
+		s.Cookie.Domain = h.domain
+		s.Cookie.HttpOnly = true
 
 		// When external stores are configured, we want to store the session ID in
 		// the cookie to be able to store and retrieve its data.

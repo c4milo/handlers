@@ -45,10 +45,10 @@ type Session struct {
 }
 
 // New returns a new Session
-func New(keys []string) *Session {
+func New(name string, keys []string) *Session {
 	session := Session{
 		data:   make(map[interface{}]interface{}),
-		Cookie: new(http.Cookie),
+		Cookie: &http.Cookie{Name: name},
 		keys:   keys,
 	}
 	return &session

@@ -59,7 +59,7 @@ func WithMaxAge(d time.Duration) option {
 
 // Load loads the session, either form the built-in cookie store or an external Store
 func (h *handler) Load(r *http.Request) (*Session, error) {
-	s := New()
+	s := New(h.keys)
 
 	cookie, err := r.Cookie(h.name)
 	if err != nil {
@@ -79,8 +79,6 @@ func (h *handler) Load(r *http.Request) (*Session, error) {
 	} else {
 		s.Cookie = cookie
 	}
-
-	s.Keys = h.keys
 
 	if r.TLS != nil {
 		s.Secure = true

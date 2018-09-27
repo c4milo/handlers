@@ -36,7 +36,7 @@ type Store interface {
 type Session struct {
 	*http.Cookie
 	// keys is the key used to encrypt and authenticate the session cookie's value
-	Keys []string
+	keys []string
 	// data is where the session data is temporarly loaded to for manipulation,
 	// during the request-response lifecycle.
 	data map[interface{}]interface{}
@@ -45,10 +45,11 @@ type Session struct {
 }
 
 // New returns a new Session
-func New() *Session {
+func New(keys []string) *Session {
 	session := Session{
 		data:   make(map[interface{}]interface{}),
 		Cookie: new(http.Cookie),
+		keys:   keys,
 	}
 	return &session
 }
@@ -88,7 +89,7 @@ func (s *Session) Encode() ([]byte, error) {
 		return nil, nil
 	}
 
-	if len(s.Keys) == 0 {
+	if len(s.keys) == 0 {
 		return nil, errors.New("at least one encryption key is required")
 	}
 
@@ -103,7 +104,7 @@ func (s *Session) Encode() ([]byte, error) {
 	}
 
 	var key [32]byte
-	copy(key[:], s.Keys[0])
+	copy(key[:], s.keys[0])
 
 	box := secretbox.Seal(nonce[:], msg, &nonce, &key)
 
@@ -130,7 +131,7 @@ func (s *Session) Decode(data []byte) error {
 	var ok bool
 	copy(nonce[:], box[:24])
 
-	for _, k := range s.Keys {
+	for _, k := range s.keys {
 		copy(key[:], k)
 		msg, ok = secretbox.Open(nil, box[24:], &nonce, &key)
 		if ok {

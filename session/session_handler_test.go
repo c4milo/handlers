@@ -40,9 +40,8 @@ func TestSave(t *testing.T) {
 	assert.Cond(t, len(resp.Cookies()) > 0, "no session cookie found")
 
 	cookie := resp.Cookies()[0]
-	s := New()
+	s := New([]string{"new"})
 	s.Cookie = cookie
-	s.Keys = []string{"new"}
 	err = s.Decode([]byte(cookie.Value))
 	assert.Ok(t, err)
 	assert.Equals(t, "gophersito", s.Get("blah"))

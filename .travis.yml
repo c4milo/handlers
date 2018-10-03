@@ -5,7 +5,8 @@ env:
   - PROTOBUF_VERSION=3.2.0
 
 go:
-  - 1.8
+  - 1.10
+  - 1.11
   - tip
 
 before_install:

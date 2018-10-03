@@ -5,8 +5,8 @@ env:
   - PROTOBUF_VERSION=3.2.0
 
 go:
-  - 1.10
-  - 1.11
+  - "1.10"
+  - "1.11"
   - tip
 
 before_install:
@@ -29,3 +29,5 @@ install:
   - go get -v github.com/grpc-ecosystem/grpc-gateway/...
   - go get -v github.com/golang/protobuf/protoc-gen-go
   - go get -v github.com/pierrec/lz4
+  - go get -v github.com/vmihailenco/msgpack
+  - go get -v golang.org/x/crypto/nacl/secretbox

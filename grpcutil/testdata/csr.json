@@ -1,0 +1,18 @@
+{
+    "hosts": [
+        "localhost",
+        "www.example.com"
+    ],
+    "CN": "localhost",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{
+        "C": "US",
+        "L": "New York",
+        "O": "Example Company, LLC",
+        "OU": "Operations",
+        "ST": "New York"
+    }]
+}

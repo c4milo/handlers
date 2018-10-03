@@ -19,6 +19,8 @@ go get -u -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 go get -u -v github.com/golang/protobuf/protoc-gen-go
 ```
 
+3. cd testdata && cfssl selfsign localhost csr.json | cfssljson -bare selfsigned
+
 3. Run `go generate`
 
 4. Run server `go run cmd/example.go server`

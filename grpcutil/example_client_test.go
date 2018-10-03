@@ -12,7 +12,7 @@ import (
 )
 
 func Example_client() {
-	tlsKeyPair, err := tls.LoadX509KeyPair("testdata/cert.pem", "testdata/key.pem")
+	tlsKeyPair, err := tls.LoadX509KeyPair("testdata/selfsigned.pem", "testdata/selfsigned-key.pem")
 	if err != nil {
 		panic(err)
 	}

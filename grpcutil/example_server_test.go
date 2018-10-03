@@ -25,7 +25,7 @@ func registerService(binding grpcutil.ServiceBinding) error {
 }
 
 func Example_server() {
-	tlsKeyPair, err := tls.LoadX509KeyPair("testdata/cert.pem", "testdata/key.pem")
+	tlsKeyPair, err := tls.LoadX509KeyPair("testdata/selfsigned.pem", "testdata/selfsigned-key.pem")
 	if err != nil {
 		panic(err)
 	}

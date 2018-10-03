@@ -7,8 +7,8 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
-  "net"
 	"testing"
 
 	"github.com/hooklift/assert"
@@ -37,7 +37,7 @@ func TestHandler(t *testing.T) {
 		fmt.Fprint(w, "Hello HTTP handler")
 	})
 
-	cert, err := tls.LoadX509KeyPair("testdata/cert.pem", "testdata/key.pem")
+	cert, err := tls.LoadX509KeyPair("testdata/selfsigned.pem", "testdata/selfsigned-key.pem")
 	assert.Ok(t, err)
 
 	handler := Handler(requestHandler, WithTLSCert(&cert), WithServices([]ServiceRegisterFn{RegisterService}), WithPort("3333"))

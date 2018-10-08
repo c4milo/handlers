@@ -31,3 +31,4 @@ install:
   - go get -v github.com/pierrec/lz4
   - go get -v github.com/vmihailenco/msgpack
   - go get -v golang.org/x/crypto/nacl/secretbox
+  - go get -v github.com/pkg/errors

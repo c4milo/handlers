@@ -29,11 +29,11 @@ type Option func(*options)
 
 type options struct {
 	serverOpts   []grpc.ServerOption
+	gwServerOpts []runtime.ServeMuxOption
 	services     []ServiceRegisterFn
 	cert         *tls.Certificate
 	compressor   grpc.Compressor
 	decompressor grpc.Decompressor
-	errorHandler runtime.ProtoErrorHandlerFunc
 	port         string
 	skipPaths    []string
 }
@@ -42,6 +42,13 @@ type options struct {
 func WithServerOpts(opts []grpc.ServerOption) Option {
 	return func(o *options) {
 		o.serverOpts = opts
+	}
+}
+
+// WithGWServerOpts sets GRPC Gateway server options. Optional.
+func WithGWServerOpts(opts []runtime.ServeMuxOption) Option {
+	return func(o *options) {
+		o.gwServerOpts = opts
 	}
 }
 
@@ -87,13 +94,6 @@ func WithDecompressor(d grpc.Decompressor) Option {
 func WithSkipPath(path ...string) Option {
 	return func(o *options) {
 		o.skipPaths = path
-	}
-}
-
-// WithErrorHandler sets a custom gRPC gateway error handler.
-func WithErrorHandler(fn runtime.ProtoErrorHandlerFunc) Option {
-	return func(o *options) {
-		o.errorHandler = fn
 	}
 }
 
@@ -160,12 +160,7 @@ func Handler(h http.Handler, opts ...Option) http.Handler {
 		log.Fatalf("failed to connect to local gRPC server: %v", err)
 	}
 
-	var muxOpts []runtime.ServeMuxOption
-	if options.errorHandler != nil {
-		muxOpts = append(muxOpts, runtime.WithProtoErrorHandler(options.errorHandler))
-	}
-
-	gwMuxer := runtime.NewServeMux(muxOpts...)
+	gwMuxer := runtime.NewServeMux(options.gwServerOpts...)
 	serviceBinding := ServiceBinding{
 		GRPCServer:        server,
 		GRPCGatewayClient: clientConn,

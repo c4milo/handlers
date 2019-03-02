@@ -145,6 +145,7 @@ func Handler(h http.Handler, opts ...option) http.Handler {
 		session, err := sh.Load(r)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Internal error: %#v", err), http.StatusInternalServerError)
+			return
 		}
 		ctx := newContext(r.Context(), session)
 		res := internal.NewResponseWriter(w)

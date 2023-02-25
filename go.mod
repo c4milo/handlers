@@ -10,7 +10,7 @@ require (
 	github.com/pierrec/lz4 v2.6.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	golang.org/x/crypto v0.1.0
 	golang.org/x/net v0.7.0
 	google.golang.org/genproto v0.0.0-20210315173758-2651cd453018 // indirect
 	google.golang.org/grpc v1.36.0
